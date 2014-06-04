@@ -35,6 +35,7 @@
   var modelviewUniformLoc;
   var projectionUniformLoc;
   var lightDirectionUniformLoc;
+  var grassTextureSamplerUniformLoc;
 
   var modelviewMatrix = new Float32Array(16);
   var projectionMatrix = new Float32Array(16);
@@ -78,6 +79,7 @@
     modelviewUniformLoc = gl.getUniformLocation(program, "modelview");
     projectionUniformLoc = gl.getUniformLocation(program, "projection");
     lightDirectionUniformLoc = gl.getUniformLocation(program, "lightDirection");
+    grassTextureSamplerUniformLoc = gl.getUniformLocation(program, "grassTextureSampler");
 
     var vertices = new Float32Array(terrainSize * terrainSize * 3);
     var normalVectors = new Float32Array(terrainSize * terrainSize * 3);
@@ -207,6 +209,8 @@
     projectionMatrix[15] = 0;
 
     gl.uniformMatrix4fv(projectionUniformLoc, false, projectionMatrix);
+
+    gl.uniform1f(grassTextureSamplerUniformLoc, 0);
 
     gl.clearColor(0.4, 0.6, 1.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
