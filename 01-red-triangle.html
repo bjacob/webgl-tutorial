@@ -1,0 +1,48 @@
+<html>
+<meta charset="utf-8"/>
+<script>
+  var vertexShaderString = 
+  'attribute vec2 vertexPosition;                  \n\
+   void main(void) {                               \n\
+     gl_Position = vec4(vertexPosition, 0.0, 1.0); \n\
+   }                                               \n';
+
+  var fragmentShaderString =
+  'precision mediump float;                   \n\
+   void main(void) {                          \n\
+     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); \n\
+   }                                          \n';
+
+  function start() {
+    var gl = document.getElementById("c").getContext("webgl");
+
+    var vertexShader = gl.createShader(gl.VERTEX_SHADER);
+    gl.shaderSource(vertexShader, vertexShaderString);
+    gl.compileShader(vertexShader);
+
+    var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+    gl.shaderSource(fragmentShader, fragmentShaderString);
+    gl.compileShader(fragmentShader);
+
+    var program = gl.createProgram();
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    gl.linkProgram(program);
+    gl.useProgram(program);
+
+    var vertexPositionAttrLoc = gl.getAttribLocation(program, "vertexPosition");
+    gl.enableVertexAttribArray(vertexPositionAttrLoc);
+
+    var vertexPositionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
+    var vertices = [ 0.0,  1.0,
+                    -1.0,  -0.5,
+                     1.0,  -0.5 ];
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+    gl.vertexAttribPointer(vertexPositionAttrLoc, 2, gl.FLOAT, false, 0, 0);
+
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+</script>
+<body onload="start();">
+<canvas id="c" width="500" height="500"></canvas>

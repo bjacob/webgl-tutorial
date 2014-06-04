@@ -1,0 +1,160 @@
+<html>
+<meta charset="utf-8"/>
+<script type="x-shader/x-vertex" id="vertexShader">
+  attribute vec3 vertexPosition;
+  attribute vec3 vertexColor;
+  uniform mat4 modelview;
+  uniform mat4 projection;
+  varying vec3 varyingColor;
+  void main(void) {
+    gl_Position = projection * modelview * vec4(vertexPosition, 1.0);
+    varyingColor = vertexColor;
+  }
+</script>
+<script type="x-shader/x-fragment" id="fragmentShader">
+  precision mediump float;
+  varying vec3 varyingColor;
+  void main(void) {
+    gl_FragColor = vec4(varyingColor, 1.0);
+  }
+</script>
+<script>
+  var gl;
+
+  var modelviewUniformLoc;
+  var projectionUniformLoc;
+
+  var modelviewMatrix = new Float32Array(16);
+  var projectionMatrix = new Float32Array(16);
+
+  function start() {
+    gl = document.getElementById("c").getContext("webgl");
+
+    var vertexShader = gl.createShader(gl.VERTEX_SHADER);
+    var vertexShaderString = document.getElementById("vertexShader").text;
+    gl.shaderSource(vertexShader, vertexShaderString);
+    gl.compileShader(vertexShader);
+
+    var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+    var fragmentShaderString = document.getElementById("fragmentShader").text;
+    gl.shaderSource(fragmentShader, fragmentShaderString);
+    gl.compileShader(fragmentShader);
+
+    var program = gl.createProgram();
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    gl.linkProgram(program);
+    gl.useProgram(program);
+
+    var vertexPositionAttrLoc = gl.getAttribLocation(program, "vertexPosition");
+    gl.enableVertexAttribArray(vertexPositionAttrLoc);
+    var vertexColorAttrLoc = gl.getAttribLocation(program, "vertexColor");
+    gl.enableVertexAttribArray(vertexColorAttrLoc);
+
+    modelviewUniformLoc = gl.getUniformLocation(program, "modelview");
+    projectionUniformLoc = gl.getUniformLocation(program, "projection");
+
+    var vertexPositionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
+    var vertices = [ 0.0,  1.0, -0.5,
+                    -1.0, -0.5, -0.5,
+                     1.0, -0.5, -0.5,
+                     0.0,  0.0,  1.0];
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+    gl.vertexAttribPointer(vertexPositionAttrLoc, 3, gl.FLOAT, false, 0, 0);
+
+    var indexBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+    var indices = [0, 1, 2,
+                   0, 2, 3,
+                   0, 3, 1,
+                   2, 1, 3];
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint8Array(indices), gl.STATIC_DRAW);
+
+    var vertexColorBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertexColorBuffer);
+    var colors = [ 1.0,  0.0,  0.0,
+                   0.0,  1.0,  0.0,
+                   0.0,  0.0,  1.0,
+                   1.0,  1.0,  0.0];
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+    gl.vertexAttribPointer(vertexColorAttrLoc, 3, gl.FLOAT, false, 0, 0);
+
+    gl.enable(gl.CULL_FACE);
+
+    onresize();
+    window.addEventListener("resize", onresize);
+
+    draw();
+  }
+
+  function draw(timestamp) {
+    var speed = 0.001;
+    var angle = timestamp * speed;
+    var c = Math.cos(angle);
+    var s = Math.sin(angle);
+
+    modelviewMatrix[0]  = c;
+    modelviewMatrix[1]  = 0;
+    modelviewMatrix[2]  = s;
+    modelviewMatrix[3]  = 0;
+
+    modelviewMatrix[4]  = 0;
+    modelviewMatrix[5]  = 1;
+    modelviewMatrix[6]  = 0;
+    modelviewMatrix[7]  = 0;
+
+    modelviewMatrix[8]  = -s;
+    modelviewMatrix[9]  = 0;
+    modelviewMatrix[10] = c;
+    modelviewMatrix[11] = 0;
+
+    modelviewMatrix[12] = 0;
+    modelviewMatrix[13] = 0;
+    modelviewMatrix[14] = -5;
+    modelviewMatrix[15] = 1;
+
+    gl.uniformMatrix4fv(modelviewUniformLoc, false, modelviewMatrix);
+
+    var fieldOfViewY = Math.PI / 4;
+    var aspectRatio = 1;
+    var zNear = 1;
+    var zFar = 10;
+
+    projectionMatrix[0]  = fieldOfViewY / aspectRatio;
+    projectionMatrix[1]  = 0;
+    projectionMatrix[2]  = 0;
+    projectionMatrix[3]  = 0;
+
+    projectionMatrix[4]  = 0;
+    projectionMatrix[5]  = fieldOfViewY;
+    projectionMatrix[6]  = 0;
+    projectionMatrix[7]  = 0;
+
+    projectionMatrix[8]  = 0;
+    projectionMatrix[9]  = 0;
+    projectionMatrix[10] = (zNear + zFar) / (zNear - zFar);
+    projectionMatrix[11] = -1;
+
+    projectionMatrix[12] = 0;
+    projectionMatrix[13] = 0;
+    projectionMatrix[14] = 2 * zNear * zFar / (zNear - zFar);
+    projectionMatrix[15] = 0;
+
+    gl.uniformMatrix4fv(projectionUniformLoc, false, projectionMatrix);
+
+    gl.drawElements(gl.TRIANGLES, 12, gl.UNSIGNED_BYTE, 0);
+
+    requestAnimationFrame(draw);
+  }
+
+  function onresize() {
+    var canvas =  document.getElementById("c");
+    var size = Math.min(window.innerWidth, window.innerHeight);
+    canvas.width = size;
+    canvas.height = size;
+    gl.viewport(0, 0, size, size);
+  }
+</script>
+<body onload="start();" style="overflow:hidden; margin:0">
+<canvas id="c"></canvas>
